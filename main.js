@@ -86,10 +86,10 @@ async function handleMessage(client, message) {
         await appendToConfig(msgBody);
         await sendMessage(client, num, "Successful");
     }
-    else{
-        await setConfigFalse();
-        await sendMessage(client,num,"Try again") 
-    }
+    // else{
+    //     await setConfigFalse();
+    //     await sendMessage(client,num,"Try again") 
+    // }
 
 }
 
