@@ -1,5 +1,6 @@
 const fs = require('fs');
 const puppeteer = require('puppeteer');
+const path = require('path');
 
 const CONFIG_FILE = 'config.txt';
 const COOKIE_FILE = 'blacklane_cookies.json';
@@ -9,6 +10,16 @@ const EMAIL = 'preetujjwal7@gmail.com';
 const PASSWORD = '57e194e96972c01d3134';
 
 let browser, page;
+
+function appendToFile(filePath, data) {
+    fs.appendFile(filePath, data + '\n', (err) => {
+        if (err) {
+            console.error('❌ Error writing to file:', err);
+        } else {
+            console.log('✅ Data appended successfully!');
+        }
+    });
+}
 
 const loadConfig = () => {
     if (!fs.existsSync(CONFIG_FILE)) {
@@ -63,6 +74,9 @@ const checkOffers = async () => {
                     const acceptButton = await offer.$("button");
                     if (acceptButton) {
                         await acceptButton.click();
+                        const filePath = path.join(__dirname, 'offers.txt');
+                        const offerData = "Matching offer accepted at " + new Date().toISOString() + "\n" + offer;                        
+                        appendToFile(filePath, offerData);
                         console.log("✅ Offer Accepted Successfully!");
                     } else {
                         console.log("❌ Accept Button Not Found!");
