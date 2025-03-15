@@ -4,6 +4,7 @@ const qrcode = require('qrcode-terminal');
 const { Boom } = require('@hapi/boom');
 const fs = require('fs').promises;
 
+
 // Path to the config file
 const CONFIG_FILE = 'config.txt';
 
@@ -19,7 +20,7 @@ async function readConfig() {
 // Function to set config.txt to "true"
 async function setConfigTrue() {
     try {
-        await fs.writeFile(CONFIG_FILE, 'true\n');
+        await fs.writeFile(CONFIG_FILE, 'enabled=true\n');
         console.log("✅ Config file updated to: true");
     } catch (error) {
         console.error("❌ Error writing to config file:", error);
@@ -29,7 +30,7 @@ async function setConfigTrue() {
 // Function to set config.txt to "false" (reset file)
 async function setConfigFalse() {
     try {
-        await fs.writeFile(CONFIG_FILE, 'false\n');
+        await fs.writeFile(CONFIG_FILE, 'enabled=false\n');
         console.log("❌ Config file reset to: false");
     } catch (error) {
         console.error("❌ Error writing to config file:", error);
@@ -47,6 +48,7 @@ async function appendToConfig(newData) {
         console.error("❌ Error updating config file:", error);
     }
 }
+
 
 // Function to handle messages
 async function handleMessage(client, message) {
@@ -88,6 +90,7 @@ async function handleMessage(client, message) {
         await setConfigFalse();
         await sendMessage(client,num,"Try again") 
     }
+
 }
 
 // Function to send a WhatsApp message
