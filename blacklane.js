@@ -81,7 +81,17 @@ const checkOffers = async () => {
 const startAutomation = async () => {
     console.log("🚀 Starting Offer Checker...");
 
-    browser = await puppeteer.launch({ headless: false });
+   // browser = await puppeteer.launch({ headless: false });
+   browser = await puppeteer.launch({
+    headless: "new", // Use new headless mode
+    args: [
+        "--no-sandbox",
+        "--disable-setuid-sandbox",
+        "--disable-dev-shm-usage",
+        "--disable-accelerated-2d-canvas",
+        "--disable-gpu"
+    ]
+});
     page = await browser.newPage();
 
     if (fs.existsSync(COOKIE_FILE)) {

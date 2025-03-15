@@ -54,7 +54,7 @@ async function appendToConfig(newData) {
 async function handleMessage(client, message) {
     let msgBody = message.message?.conversation || message.message?.extendedTextMessage?.text || '';
     let num = message.key.remoteJid;
-    let adminNumber = "917827184886@s.whatsapp.net";
+    let adminNumber = "17379329048@s.whatsapp.net";
     console.log(num===adminNumber)
 
     if (num !== adminNumber) {
