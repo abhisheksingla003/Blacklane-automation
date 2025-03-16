@@ -11,6 +11,37 @@ const PASSWORD = '57e194e96972c01d3134';
 
 let browser, page;
 
+function convertTo24Hour(timeStr) {
+    const [time, period] = timeStr.split(" ");
+    let [hours, minutes] = time.split(":").map(Number);
+
+    if (period === "PM" && hours !== 12) hours += 12;
+    if (period === "AM" && hours === 12) hours = 0;
+
+    return hours * 60 + minutes; // Convert to total minutes for comparison
+}
+
+function splitDateTime(input) {
+    if (!input || typeof input !== "string") {
+        console.error("Invalid input:", input);
+        return null;
+    }
+
+    // Split by the last comma to separate date and time
+    const lastCommaIndex = input.lastIndexOf(",");
+    if (lastCommaIndex === -1) {
+        console.error("Invalid date-time format:", input);
+        return null;
+    }
+
+    const datePart = input.substring(0, lastCommaIndex).trim(); // "Sun, Mar 16"
+    const timePart = input.substring(lastCommaIndex + 1).trim(); // "05:40 PM"
+
+    return { date: datePart, time: timePart };
+}
+
+
+
 function appendToFile(filePath, data) {
     fs.appendFile(filePath, data + '\n', (err) => {
         if (err) {
@@ -51,7 +82,8 @@ const checkOffers = async () => {
     }
 
     console.log("Checking for offers...");
-    const { startTime, endTime, date, service } = config;
+    console.log(config)
+    let { starttime, endtime, date, service } = config;
 
     await page.goto(OFFERS_URL, { waitUntil: "networkidle2" });
 
@@ -69,7 +101,16 @@ const checkOffers = async () => {
 
                 console.log(`Offer Found: ${dateText}, Time: ${timeElement}, Service Class: ${serviceText}`);
 
-                if (dateText === date && timeElement >= startTime && timeElement <= endTime && serviceText.toLowerCase() === service.toLowerCase()) {
+                let dateTimeReq = splitDateTime(dateText);
+                let timeReq = convertTo24Hour(dateTimeReq.time);
+                starttime = convertTo24Hour(starttime);
+                endtime = convertTo24Hour(endtime);
+                let dateReq = dateTimeReq.date;
+
+                console.log(`OFFER DATA ACTUAL -- ${dateReq} ${timeReq} ${starttime} ${endtime} ${serviceText} ${service}`)
+
+
+                if (dateReq === date && timeReq >= starttime && timeReq <= endtime && serviceText.toLowerCase() === service.toLowerCase()) {
                     console.log("✅ Matching Offer Found! Accepting...");
                     const acceptButton = await offer.$("button");
                     if (acceptButton) {
