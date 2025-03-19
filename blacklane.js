@@ -15,8 +15,8 @@ function convertTo24Hour(timeStr) {
     const [time, period] = timeStr.split(" ");
     let [hours, minutes] = time.split(":").map(Number);
 
-    if (period === "PM" && hours !== 12) hours += 12;
-    if (period === "AM" && hours === 12) hours = 0;
+    if (period.toUpperCase() === "PM" && hours !== 12) hours += 12;
+    if (period.toUpperCase() === "AM" && hours === 12) hours = 0;
 
     return hours * 60 + minutes; // Convert to total minutes for comparison
 }
@@ -107,6 +107,7 @@ const checkOffers = async () => {
                 endtime = convertTo24Hour(endtime);
                 let dateReq = dateTimeReq.date;
 
+                let offerBooked = `OFFER DATA ACTUAL -- ${dateReq} ${timeReq} ${starttime} ${endtime} ${serviceText} ${service}`
                 console.log(`OFFER DATA ACTUAL -- ${dateReq} ${timeReq} ${starttime} ${endtime} ${serviceText} ${service}`)
 
 
@@ -124,31 +125,52 @@ const checkOffers = async () => {
                     // }
                     const detailsButton = await offer.$("a.DetailsLink-module__root--2QOZz");
                     if (detailsButton) {
-                        await detailsButton.click();
-                        await page.waitForNavigation({ waitUntil: "networkidle2" });
+                        const href = await page.evaluate(el => el.href, detailsButton);
+                        console.log("Navigating to:", href);
+                        await page.goto(href, { waitUntil: "networkidle2" });
 
-                        console.log("🔎 Navigated to Offer Details Page. Clicking Accept...");
+                        await page.waitForSelector('button', { visible: true, timeout: 5000 }); // Wait for button to appear
+                        const button = await page.$x("//button[span[contains(text(), 'Accept Offer')]]");
 
-                        // Wait for the accept button and click it
-                        await page.waitForSelector("button", { timeout: 5000 });
-                        const acceptButton = await page.$("button");
-                        if (acceptButton) {
-                            await acceptButton.click();
-                            console.log("✅ Offer Accepted Successfully!");
-
-                            // Log accepted offer
+                        if (button.length > 0) {
+                            await button[0].click();
+                            console.log("✅ 'Accept Offer' button clicked!");
                             const filePath = path.join(__dirname, 'offers.txt');
-                            const offerData = "Matching offer accepted at " + new Date().toISOString() + "\n" + offer;                        
+                            const offerData = "Matching offer accepted at " + new Date().toISOString() + "\n" + offerBooked;                        
                             appendToFile(filePath, offerData);
                         } else {
-                            console.log("❌ Accept Button Not Found!");
-                        }
+                            console.log("❌ 'Accept Offer' button not found!");
+        }
 
-                        // Go back to the offers page to continue checking
-                        await page.goto(OFFERS_URL, { waitUntil: "networkidle2" });
                     } else {
-                        console.log("❌ Details Button Not Found!");
+                        console.log("❌ 'Details' link not found!");
                     }
+                    // if (detailsButton) {
+                    //     await detailsButton.click();
+                    //     await page.waitForNavigation({ waitUntil: "networkidle2" });
+
+                    //     console.log("🔎 Navigated to Offer Details Page. Clicking Accept...");
+
+                    //     // Wait for the accept button and click it
+                    //     await page.waitForSelector("button", { timeout: 5000 });
+                    //     const acceptButton = await page.$("button");
+                    //     if (acceptButton) {
+                    //         await acceptButton.click();
+                    //         console.log("✅ Offer Accepted Successfully!");
+
+                    //         // Log accepted offer
+                    //         const filePath = path.join(__dirname, 'offers.txt');
+                    //         const offerData = "Matching offer accepted at " + new Date().toISOString() + "\n" + offer;                        
+                    //         appendToFile(filePath, offerData);
+                    //     } else {
+                    //         console.log("❌ Accept Button Not Found!");
+                    //     }
+
+                    //     // Go back to the offers page to continue checking
+                    //     await page.goto(OFFERS_URL, { waitUntil: "networkidle2" });
+                    // } else {
+                    //     console.log("❌ Details Button Not Found!");
+                    // }
                     return; // Stop checking once an offer is accepted
                 }
             }
