@@ -1,6 +1,7 @@
 const fs = require('fs');
 const puppeteer = require('puppeteer');
 const path = require('path');
+const moment = require("moment")
 
 const CONFIG_FILE = 'config.txt';
 const COOKIE_FILE = 'blacklane_cookies.json';
@@ -40,6 +41,14 @@ function splitDateTime(input) {
     return { date: datePart, time: timePart };
 }
 
+function checker(mydate, booking){
+    const unixTimestamp = moment(mydate, "ddd, MMM DD").unix();
+    const unixTimestamp2 = moment(booking, "ddd, MMM DD").unix();
+
+    return unixTimestamp2 >= unixTimestamp
+    
+}
+
 
 
 function appendToFile(filePath, data) {
@@ -59,7 +68,7 @@ const loadConfig = () => {
     }
 
     const configData = fs.readFileSync(CONFIG_FILE, "utf-8").trim().split("\n");
-    if(configData.length<5) return null
+    if(configData.length<6) return null
     const config = {};
 
     configData.forEach((line) => {
@@ -76,14 +85,14 @@ const checkOffers = async () => {
     const config = loadConfig(); // Reload config every time
 
     if (!config || config["enabled"] !== "true") {
-        console.log(config)
+        //console.log(config)
         console.log("Automation is disabled. Checking again in 10 seconds...");
         return;
     }
 
     console.log("Checking for offers...");
     console.log(config)
-    let { starttime, endtime, date, service } = config;
+    let { starttime, endtime, date, service, option } = config;
 
     await page.goto(OFFERS_URL, { waitUntil: "networkidle2" });
 
@@ -110,69 +119,104 @@ const checkOffers = async () => {
                 let offerBooked = `OFFER DATA ACTUAL -- ${dateReq} ${timeReq} ${starttime} ${endtime} ${serviceText} ${service}`
                 console.log(`OFFER DATA ACTUAL -- ${dateReq} ${timeReq} ${starttime} ${endtime} ${serviceText} ${service}`)
 
-
-                if (dateReq.toLowerCase() === date && timeReq >= starttime && timeReq <= endtime && serviceText.toLowerCase() === service.toLowerCase()) {
-                    console.log("✅ Matching Offer Found! Accepting...");
-                    // const acceptButton = await offer.$("button");
-                    // if (acceptButton) {
-                    //     await acceptButton.click();
-                    //     const filePath = path.join(__dirname, 'offers.txt');
-                    //     const offerData = "Matching offer accepted at " + new Date().toISOString() + "\n" + offer;                        
-                    //     appendToFile(filePath, offerData);
-                    //     console.log("✅ Offer Accepted Successfully!");
-                    // } else {
-                    //     console.log("❌ Accept Button Not Found!");
-                    // }
-                    const detailsButton = await offer.$("a.DetailsLink-module__root--2QOZz");
-                    if (detailsButton) {
-                        const href = await page.evaluate(el => el.href, detailsButton);
-                        console.log("Navigating to:", href);
-                        await page.goto(href, { waitUntil: "networkidle2" });
-
-                        await page.waitForSelector('button', { visible: true, timeout: 5000 }); // Wait for button to appear
-                        const button = await page.$x("//button[span[contains(text(), 'Accept Offer')]]");
-
-                        if (button.length > 0) {
-                            await button[0].click();
-                            console.log("✅ 'Accept Offer' button clicked!");
-                            const filePath = path.join(__dirname, 'offers.txt');
-                            const offerData = "Matching offer accepted at " + new Date().toISOString() + "\n" + offerBooked;                        
-                            appendToFile(filePath, offerData);
+                if(option == "1"){
+                    if (dateReq.toLowerCase() === date && timeReq >= starttime && timeReq <= endtime && serviceText.toLowerCase() === service.toLowerCase()) {
+                        console.log("✅ Matching Offer Found! Accepting...");
+                        // const acceptButton = await offer.$("button");
+                        // if (acceptButton) {
+                        //     await acceptButton.click();
+                        //     const filePath = path.join(__dirname, 'offers.txt');
+                        //     const offerData = "Matching offer accepted at " + new Date().toISOString() + "\n" + offer;                        
+                        //     appendToFile(filePath, offerData);
+                        //     console.log("✅ Offer Accepted Successfully!");
+                        // } else {
+                        //     console.log("❌ Accept Button Not Found!");
+                        // }
+                        const detailsButton = await offer.$("a.DetailsLink-module__root--2QOZz");
+                        if (detailsButton) {
+                            const href = await page.evaluate(el => el.href, detailsButton);
+                            // console.log("Navigating to:", href);
+                            await page.goto(href, { waitUntil: "networkidle2" });
+    
+                            await page.waitForSelector('button', { visible: true, timeout: 5000 }); // Wait for button to appear
+                            const button = await page.$x("//button[span[contains(text(), 'Accept Offer')]]");
+    
+                            if (button.length > 0) {
+                                await button[0].click();
+                                // console.log("✅ 'Accept Offer' button clicked!");
+                                const filePath = path.join(__dirname, 'offers.txt');
+                                const offerData = "Matching offer accepted at " + new Date().toISOString() + "\n" + offerBooked;                        
+                                appendToFile(filePath, offerData);
+                            } else {
+                                console.log("❌ 'Accept Offer' button not found!");
+            }
+    
                         } else {
-                            console.log("❌ 'Accept Offer' button not found!");
-        }
-
-                    } else {
-                        console.log("❌ 'Details' link not found!");
+                            console.log("❌ 'Details' link not found!");
+                        }
+                        // if (detailsButton) {
+                        //     await detailsButton.click();
+                        //     await page.waitForNavigation({ waitUntil: "networkidle2" });
+    
+                        //     console.log("🔎 Navigated to Offer Details Page. Clicking Accept...");
+    
+                        //     // Wait for the accept button and click it
+                        //     await page.waitForSelector("button", { timeout: 5000 });
+                        //     const acceptButton = await page.$("button");
+                        //     if (acceptButton) {
+                        //         await acceptButton.click();
+                        //         console.log("✅ Offer Accepted Successfully!");
+    
+                        //         // Log accepted offer
+                        //         const filePath = path.join(__dirname, 'offers.txt');
+                        //         const offerData = "Matching offer accepted at " + new Date().toISOString() + "\n" + offer;                        
+                        //         appendToFile(filePath, offerData);
+                        //     } else {
+                        //         console.log("❌ Accept Button Not Found!");
+                        //     }
+    
+                        //     // Go back to the offers page to continue checking
+                        //     await page.goto(OFFERS_URL, { waitUntil: "networkidle2" });
+                        // } else {
+                        //     console.log("❌ Details Button Not Found!");
+                        // }
+                        return; // Stop checking once an offer is accepted
                     }
-                    // if (detailsButton) {
-                    //     await detailsButton.click();
-                    //     await page.waitForNavigation({ waitUntil: "networkidle2" });
-
-                    //     console.log("🔎 Navigated to Offer Details Page. Clicking Accept...");
-
-                    //     // Wait for the accept button and click it
-                    //     await page.waitForSelector("button", { timeout: 5000 });
-                    //     const acceptButton = await page.$("button");
-                    //     if (acceptButton) {
-                    //         await acceptButton.click();
-                    //         console.log("✅ Offer Accepted Successfully!");
-
-                    //         // Log accepted offer
-                    //         const filePath = path.join(__dirname, 'offers.txt');
-                    //         const offerData = "Matching offer accepted at " + new Date().toISOString() + "\n" + offer;                        
-                    //         appendToFile(filePath, offerData);
-                    //     } else {
-                    //         console.log("❌ Accept Button Not Found!");
-                    //     }
-
-                    //     // Go back to the offers page to continue checking
-                    //     await page.goto(OFFERS_URL, { waitUntil: "networkidle2" });
-                    // } else {
-                    //     console.log("❌ Details Button Not Found!");
-                    // }
-                    return; // Stop checking once an offer is accepted
+                        
                 }
+                else if(option == "2"){
+                    if (checker(date, dateReq)) {
+                        console.log("✅ Matching Offer Found! Accepting...");
+                        const detailsButton = await offer.$("a.DetailsLink-module__root--2QOZz");
+                        if (detailsButton) {
+                            const href = await page.evaluate(el => el.href, detailsButton);
+                            // console.log("Navigating to:", href);
+                            await page.goto(href, { waitUntil: "networkidle2" });
+    
+                            await page.waitForSelector('button', { visible: true, timeout: 5000 }); // Wait for button to appear
+                            const button = await page.$x("//button[span[contains(text(), 'Accept Offer')]]");
+    
+                            if (button.length > 0) {
+                                await button[0].click();
+                                // console.log("✅ 'Accept Offer' button clicked!");
+                                const filePath = path.join(__dirname, 'offers.txt');
+                                const offerData = "Matching offer accepted at " + new Date().toISOString() + "\n" + offerBooked;                        
+                                appendToFile(filePath, offerData);
+                            } else {
+                                console.log("❌ 'Accept Offer' button not found!");
+            }
+    
+                        } else {
+                            console.log("❌ 'Details' link not found!");
+                        }
+                       
+                        return; // Stop checking once an offer is accepted
+                    }
+
+                }
+
+
+                
             }
         } else {
             console.log("No offers available. Retrying in 10 seconds...");

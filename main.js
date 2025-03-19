@@ -84,6 +84,10 @@ async function handleMessage(client, message) {
     } 
     else if (msgBody.startsWith("Service=")) {
         await appendToConfig(msgBody);
+        await sendMessage(client, num, "Option 1 : Default , Option 2 : Anytime on and after date you mention");
+    }
+    else if (msgBody.startsWith("Option=")) {
+        await appendToConfig(msgBody);
         await sendMessage(client, num, "Successful");
     }
     // else{
